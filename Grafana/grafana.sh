@@ -99,8 +99,8 @@ show_name() {
    show_green '░░░░░░█▀▀█░█▀▀█░█▀▀█░█▀▀░█▀▀█░█▄░░█░█▀▀█░░░░░░█▀▀█░█▀▀█░█▀▀░▀█▀░░░░░░'
    show_green '░░░░░░█░▄▄░█▄▄▀░█▀▀█░█▀▀░█▀▀█░█░█░█░█▀▀█░░░░░░▀▀▄▄░█░░█░█▀▀░░█░░░░░░░'
    show_green '░░░░░░█▄▄█░█░░█░█░░█░█░░░█░░█░█░░▀█░█░░█░░░░░░█▄▄█░█▄▄█░█░░░░█░░░░░░░'
-   show_green '░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░'
-   show_blue '       script version: v0.2 '
+   #show_green '░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░'
+   show_blue '                                                 script version: v0.2 '
    echo ""
 }
 
@@ -268,6 +268,7 @@ EOF
     echo -en "${TERRACOTTA}${BOLD}Введи порт для Grafana (по умолчанию 3010): ${NC}"
     read GRAFANA_PORT
     GRAFANA_PORT=${GRAFANA_PORT:-3010}
+    export GRAFANA_PORT
 
     # Замена порта в файле конфигурации Grafana
     sed -i "s/;http_port = 3000/http_port = $GRAFANA_PORT/" /etc/grafana/grafana.ini || { show_war "❌ Ошибка: Не удалось изменить порт Grafana."; return 1; }
@@ -280,6 +281,75 @@ EOF
     echo ""
 
 }
+
+add_dashboard() {
+    show "Добавление дашборда в Grafana..."
+
+    # Директория для дашбордов
+    mkdir -p /etc/grafana/provisioning/dashboards
+    mkdir -p /var/lib/grafana/dashboards
+
+    # Предложение выбрать язык дашборда
+    show_bold "Выберите язык интерфейса дашборда Grafana"
+    echo ""
+    show "1. Английский"
+    show "2. Русский"
+    read -p "$(show_bold 'Ваш выбор (по умолчанию 1): ')" DASHBOARD_CHOICE
+    DASHBOARD_CHOICE=${DASHBOARD_CHOICE:-1}
+
+    # Определение ссылки и имени файла на основе выбора
+    if [[ "$DASHBOARD_CHOICE" == "2" ]]; then
+        DASHBOARD_URL="https://raw.githubusercontent.com/NodatekaII/Basic/refs/heads/main/Grafana/grafana_nodateka_ru.json"
+        DASHBOARD_NAME="grafana_nodateka_ru.json"
+    else
+        DASHBOARD_URL="https://raw.githubusercontent.com/NodatekaII/Basic/refs/heads/main/Grafana/grafana_nodateka_eng.json"
+        DASHBOARD_NAME="grafana_nodateka_eng.json"
+    fi
+
+    DASHBOARD_PATH="/var/lib/grafana/dashboards/$DASHBOARD_NAME"
+
+    # Скачивание выбранного файла дашборда
+    wget -q -O "$DASHBOARD_PATH" "$DASHBOARD_URL" || { show_war "❌ Ошибка: Не удалось скачать дашборд с $DASHBOARD_URL."; return 1; }
+
+    # Конфигурация провиженинга для дашбордов
+    cat <<EOF > /etc/grafana/provisioning/dashboards/default.yaml
+apiVersion: 1
+providers:
+  - name: "default"
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 10
+    options:
+      path: /var/lib/grafana/dashboards
+EOF
+
+    # Конфигурация источника данных Prometheus
+    PROMETHEUS_IP=$(hostname -I | awk '{print $1}')
+    cat <<EOF > /etc/grafana/provisioning/datasources/prometheus.yaml
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    url: http://$PROMETHEUS_IP:9090
+    access: proxy
+    isDefault: true
+EOF
+
+    # Перезапуск Grafana для применения изменений
+    systemctl restart grafana-server
+    if [[ $? -eq 0 ]]; then
+        show_bold "✅ Дашборд ($DASHBOARD_NAME) успешно добавлен в Grafana. Перезапуск завершён."
+        echo ""
+    else
+        show_war "❌ Ошибка: Не удалось перезапустить Grafana."
+        return 1
+    fi
+}
+
+
 
 configure_prometheus() {
     local prometheus_config_path="/etc/prometheus/prometheus.yml"
@@ -305,7 +375,6 @@ EOF
 
     # Проверка на существование записи основного сервера
     if ! grep -q "$MAIN_SERVER_NAME" "$prometheus_config_path"; then
-        SERVER_IP=$(hostname -I | awk '{print $1}')
         cat <<EOF >> "$prometheus_config_path"
       - targets: ["$SERVER_IP:9100"]
         labels:
@@ -460,9 +529,14 @@ delete_monitoring() {
     show_bold "✅ Все компоненты успешно удалены."
     echo ""
 }
-
-
-
+show_link() {
+    
+    echo ""  
+    echo -en "${TERRACOTTA}${BOLD}💡 Мониторинг доступен по ссылке: ${NC}${LIGHT_BLUE} http://$SERVER_IP:$GRAFANA_PORT/${NC}\n"
+    echo -en "${TERRACOTTA}${BOLD}Login: ${NC}${LIGHT_BLUE}admin  ${NC} ${TERRACOTTA}${BOLD}Password: ${NC}${LIGHT_BLUE}admin${NC}\n"
+    show_green '░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░'
+    echo ""
+}
 ################################################################################################
 
 menu() {
@@ -478,9 +552,11 @@ menu() {
             prometheus_install
             node_exporter_install
             grafana_install
+            add_dashboard
             configure_prometheus
             add_server
             check_status
+            show_link
             ;;
         2)  
             # Установка на ведомый сервер
@@ -490,10 +566,12 @@ menu() {
             # Добавление ведомых серверов
             add_server
             check_status
+            show_link
             ;;
         4)  
             # Просмотр статуса служб
             check_status
+            show_link
             ;;
         
         9)  
