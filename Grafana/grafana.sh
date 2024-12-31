@@ -57,6 +57,16 @@ function show_green() {
     echo -e "${GREEN}$1${NC}"
 }
 
+function color_text() {
+    local text="$1"
+    local bg_color="$2"
+    local fg_color="$3"
+    echo -e "\033[48;5;${bg_color}m\033[38;5;${fg_color}m ${text} \033[0m"
+}
+
+
+
+
 
 # Логотип команды
 show_logotip() {
@@ -100,7 +110,7 @@ show_name() {
    show_green '░░░░░░█░▄▄░█▄▄▀░█▀▀█░█▀▀░█▀▀█░█░█░█░█▀▀█░░░░░░▀▀▄▄░█░░█░█▀▀░░█░░░░░░░'
    show_green '░░░░░░█▄▄█░█░░█░█░░█░█░░░█░░█░█░░▀█░█░░█░░░░░░█▄▄█░█▄▄█░█░░░░█░░░░░░░'
    #show_green '░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░'
-   show_blue '                                                 script version: v0.2 '
+   color_text "                                                  script version: v0.2" 46 15  # Зелёный фон, белый текст
    echo ""
 }
 
