@@ -17,6 +17,7 @@ VIOLET='\033[38;5;93m'
 BEIGE='\033[38;5;228m'
 GOLD='\033[38;5;220m'
 GREEN='\033[38;5;28m'
+WHITE='\033[38;5;15m'
 NC='\033[0m'
 
 
@@ -55,6 +56,10 @@ function show_gold() {
 
 function show_green() {
     echo -e "${GREEN}$1${NC}"
+}
+
+function show_white() {
+    echo -e "${WHITE}$1${NC}"
 }
 
 function color_text() {
@@ -109,8 +114,8 @@ show_name() {
    show_green '░░░░░░█▀▀█░█▀▀█░█▀▀█░█▀▀░█▀▀█░█▄░░█░█▀▀█░░░░░░█▀▀█░█▀▀█░█▀▀░▀█▀░░░░░░'
    show_green '░░░░░░█░▄▄░█▄▄▀░█▀▀█░█▀▀░█▀▀█░█░█░█░█▀▀█░░░░░░▀▀▄▄░█░░█░█▀▀░░█░░░░░░░'
    show_green '░░░░░░█▄▄█░█░░█░█░░█░█░░░█░░█░█░░▀█░█░░█░░░░░░█▄▄█░█▄▄█░█░░░░█░░░░░░░'
-   #show_green '░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░'
-   color_text "                                              script version: v0.2" 28 15  # Зелёный фон, белый текст
+   show_green '---------------------------------------------------------------------'
+   show_white '                                                 script version: v0.2'
    echo ""
 }
 
@@ -539,6 +544,21 @@ delete_monitoring() {
     show_bold "✅ Все компоненты успешно удалены."
     echo ""
 }
+
+get_grafana_port() {
+    local config_file="/etc/grafana/grafana.ini"
+    if [[ -f "$config_file" ]]; then
+        # Ищем строку с портом Grafana
+        GRAFANA_PORT=$(grep -Po '^http_port = \K\d+' "$config_file")
+        if [[ -z "$GRAFANA_PORT" ]]; then
+            show_war "⚠️ Порт Grafana не найден в $config_file."
+        fi
+    else
+        show_war "❌ Файл конфигурации Grafana $config_file не найден."
+    fi
+}
+
+
 show_link() {
     
     echo ""  
@@ -576,11 +596,13 @@ menu() {
             # Добавление ведомых серверов
             add_server
             check_status
+            get_grafana_port
             show_link
             ;;
         4)  
             # Просмотр статуса служб
             check_status
+            get_grafana_port
             show_link
             ;;
         
