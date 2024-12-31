@@ -1,15 +1,31 @@
 #!/bin/bash
 
+# Проверка наличия curl и установка, если не установлен
+if ! command -v curl &> /dev/null; then
+    sudo apt update
+    sudo apt install curl -y
+fi
+sleep 1
+
 # Цвета для текста
 TERRACOTTA='\033[38;5;208m'
 LIGHT_BLUE='\033[38;5;117m'
 RED='\033[0;31m'
 BOLD='\033[1m'
+PURPLE='\033[0;35m'
+VIOLET='\033[38;5;93m'
+BEIGE='\033[38;5;228m'
+GOLD='\033[38;5;220m'
 NC='\033[0m'
+
 
 # Функции для форматирования текста
 function show() {
-    echo -e "${TERRACOTTA}${BOLD}$1${NC}"
+    echo -e "${TERRACOTTA}$1${NC}"
+}
+
+function show_bold() {
+    echo -en "${TERRACOTTA}${BOLD}$1${NC}"
 }
 
 function show_blue() {
@@ -17,18 +33,99 @@ function show_blue() {
 }
 
 function show_war() {
-    echo -e "${RED}$1${NC}"
+    echo -e "${RED}${BOLD}$1${NC}"
 }
 
-# ASCII-арт
-echo "----------------------------------------------------------------------"
-show '███╗   ██╗ ██████╗ ██████╗   █████╗ ████████╗███████╗██╗  ██╗ █████╗ '
-show '████╗  ██║██╔═══██╗██╔══██╗ ██╔══██╗╚══██╔══╝██╔════╝██║ ██╔╝██╔══██╗'
-show '██╔██╗ ██║██║   ██║██║   ██║███████║   ██║   █████╗  █████╔╝ ███████║'
-show '██║╚██╗██║██║   ██║██║  ██║ ██╔══██║   ██║   ██╔══╝  ██╔═██╗ ██╔══██║'
-show '██║ ╚████║╚██████╔╝██████╔╝ ██║  ██║   ██║   ███████╗██║  ██╗██║  ██║'
-show '╚═╝  ╚═══╝ ╚═════╝ ╚═════╝  ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝'
-echo "----------------------------------------------------------------------"
+function show_purple() {
+    echo -e "${PURPLE}$1${NC}"
+}
+
+function show_violet() {
+    echo -e "${VIOLET}$1${NC}"
+}
+
+function show_beige() {
+    echo -e "${BEIGE}$1${NC}"
+}
+
+function show_gold() {
+    echo -e "${GOLD}$1${NC}"
+}
+
+# Логотип команды
+show_logotip() {
+    bash <(curl -s https://raw.githubusercontent.com/NodatekaII/Basic/refs/heads/main/name.sh)
+}
+
+#финальное сообщение
+final_message() {
+    echo ''
+    show_bold "Присоединяйся к Нодатеке, будем ставить ноды вместе!"
+    echo ''
+    echo -en "${TERRACOTTA}${BOLD}Telegram: ${NC}${LIGHT_BLUE}https://t.me/cryptotesemnikov/778${NC}\n"
+    echo -en "${TERRACOTTA}${BOLD}Twitter: ${NC}${LIGHT_BLUE}https://x.com/nodateka${NC}\n"
+    echo -e "${TERRACOTTA}${BOLD}YouTube: ${NC}${LIGHT_BLUE}https://www.youtube.com/@CryptoTesemnikov${NC}\n"
+}
+
+# Функция для подтверждения действия
+confirm() {
+    local prompt="$1"
+    show_bold "❓ $prompt [y/n, Enter = yes]: "  # Выводим вопрос с цветом
+    read choice  # Читаем ввод пользователя
+    case "$choice" in
+        ""|y|Y|yes|Yes)  # Пустой ввод или "да"
+            return 0  # Подтверждение действия
+            ;;
+        n|N|no|No)  # Любой вариант "нет"
+            return 1  # Отказ от действия
+            ;;
+        *)
+            show_war '⚠️ Пожалуйста, введите y или n.'
+            confirm "$prompt"  # Повторный запрос, если ответ не распознан
+            ;;
+    esac
+}
+
+
+# Название узла
+show_name() {
+   echo ""
+   show_gold '░░░░░░░█▀▀█░▀█▀░▀█▀░█░░█░█▀▀█░█░░░░░░░░░█▄░░█░█▀▀█░█▀▀▄░█▀▀▀░░░░░░░'
+   show_gold '░░░░░░░█▄▄▀░░█░░░█░░█░░█░█▀▀█░█░░░░░░░░░█░█░█░█░░█░█░░█░█▀▀▀░░░░░░░'
+   show_gold '░░░░░░░█░░█░▄█▄░░█░░▀▄▄▀░█░░█░█▄▄█░░░░░░█░░▀█░█▄▄█░█▄▄▀░█▄▄▄░░░░░░░'
+   #show_blue '     script version: v0.2 MAINNNET'
+   echo ""
+}
+
+# Меню с командами
+show_menu() {
+    show_logotip
+    show_name
+    show_bold 'Выберите действие: '
+    echo ''
+    actions=(
+        "1. Установить ноду Ritual"
+        "2. Смена базовых настроек"
+        "3. Замена RPC"
+        "4. Просмотр состояния контейнеров"
+        "5. Просмотр логов ноды"
+        "6. Перезагрузка контейнеров (отчистка диска)"
+        "9. Удаление ноды"
+        "0. Выход"
+
+    )
+    for action in "${actions[@]}"; do
+        show "$action"
+    done
+}
+
+# Проверка на запуск от имени root
+if [ "$EUID" -ne 0 ]; then
+  show_war "⚠️ Пожалуйста, запустите скрипт с правами root."
+  exit 1
+fi
+
+################################################################################################
 
 # Установка переменных версий
 PROMETHEUS_VERSION="2.54.1"
@@ -206,3 +303,70 @@ SERVER_IP=$(hostname -I | awk '{print $1}')
 echo -e "${TERRACOTTA}${BOLD}Установка завершена.\n"
 echo -en "${TERRACOTTA}${BOLD}Теперь ты можешь мониторить состояние своих серверов в Grafana по адресу: ${NC}${LIGHT_BLUE}http://$SERVER_IP:$GRAFANA_PORT${NC}\n\n"
 echo -en "${TERRACOTTA}${BOLD}Присоединяйся к Нодатеке, будем ставить ноды вместе! ${NC}${LIGHT_BLUE}https://t.me/cryptotesemnikov/778${NC}\n"
+
+################################################################################################
+
+menu() {
+    # Проверка аргумента меню
+    if [[ -z "$1" ]]; then
+        show_war "⚠️ Пожалуйста, выберите пункт меню."
+        return
+    fi
+
+    case $1 in
+        1)  
+            # Установка ноды
+            install_dependencies
+            clone_repository
+            configure_files
+            start_screen_session
+            install_foundry
+            install_project_dependencies
+            call_contract
+            ;;
+        2)  
+            # Изменение настроек и перезапуск ноды
+            change_settings
+            cp "$HELLO_CONFIG_PATH" "$CONFIG_PATH"
+            restart_node
+            ;;
+        3)  
+            # Замена RPC URL
+            replace_rpc_url
+            ;;
+        4)  
+            # Просмотр запущенных контейнеров
+            docker ps -a | grep infernet
+            ;;
+        5)  
+            # Просмотр логов ноды
+            docker logs -f --tail 20 infernet-node
+            ;;
+        6)  
+            # Перезапуск контейнеров
+            show "Перезапуск контейнеров..."
+            restart_node
+            ;;
+        9)  
+            # Удаление ноды с подтверждением
+            delete_node
+            ;;
+        0)  
+            # Выход с финальным сообщением
+            final_message
+            exit 0
+            ;;
+        *)  
+            # Обработка неверного ввода
+            show_war "⚠️ Неверный выбор, попробуйте снова."
+            ;;
+    esac
+}
+            
+
+while true; do
+    show_menu
+    show_bold 'Ваш выбор: '
+    read choice
+    menu "$choice"
+done
