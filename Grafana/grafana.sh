@@ -16,6 +16,7 @@ PURPLE='\033[0;35m'
 VIOLET='\033[38;5;93m'
 BEIGE='\033[38;5;228m'
 GOLD='\033[38;5;220m'
+GREEN='\033[38;5;28m'
 NC='\033[0m'
 
 
@@ -51,6 +52,11 @@ function show_beige() {
 function show_gold() {
     echo -e "${GOLD}$1${NC}"
 }
+
+function show_green() {
+    echo -e "${GREEN}$1${NC}"
+}
+
 
 # Логотип команды
 show_logotip() {
@@ -90,10 +96,10 @@ confirm() {
 # Название узла
 show_name() {
    echo ""
-   show_gold '░░░░░░░█▀▀█░▀█▀░▀█▀░█░░█░█▀▀█░█░░░░░░░░░█▄░░█░█▀▀█░█▀▀▄░█▀▀▀░░░░░░░'
-   show_gold '░░░░░░░█▄▄▀░░█░░░█░░█░░█░█▀▀█░█░░░░░░░░░█░█░█░█░░█░█░░█░█▀▀▀░░░░░░░'
-   show_gold '░░░░░░░█░░█░▄█▄░░█░░▀▄▄▀░█░░█░█▄▄█░░░░░░█░░▀█░█▄▄█░█▄▄▀░█▄▄▄░░░░░░░'
-   #show_blue '     script version: v0.2 MAINNNET'
+   show_green '░░░░░░█▀▀█░█▀▀█░█▀▀█░█▀▀░█▀▀█░█▄░░█░█▀▀█░░░░░░█▀▀█░█▀▀█░█▀▀░▀█▀░░░░░░'
+   show_green '░░░░░░█░▄▄░█▄▄▀░█▀▀█░█▀▀░█▀▀█░█░█░█░█▀▀█░░░░░░▀▀▄▄░█░░█░█▀▀░░█░░░░░░░'
+   show_green '░░░░░░█▄▄█░█░░█░█░░█░█░░░█░░█░█░░▀█░█░░█░░░░░░█▄▄█░█▄▄█░█░░░░█░░░░░░░'
+   show_blue '     script version: v0.2 '
    echo ""
 }
 
@@ -104,13 +110,13 @@ show_menu() {
     show_bold 'Выберите действие: '
     echo ''
     actions=(
-        "1. Установить ноду Ritual"
-        "2. Смена базовых настроек"
-        "3. Замена RPC"
-        "4. Просмотр состояния контейнеров"
-        "5. Просмотр логов ноды"
+        "1. Установка мониторинга на ведущий сервер"
+        "2. Установка мониторинга на ведомый сервер"
+        "3. Добавление новых серверов для мониторинга"
+        "4. Просмотр состояния служб"
+        echo ""
         "6. Перезагрузка контейнеров (отчистка диска)"
-        "9. Удаление ноды"
+        "9. Удаление служб мониторинга"
         "0. Выход"
 
     )
@@ -131,18 +137,25 @@ fi
 PROMETHEUS_VERSION="2.54.1"
 NODE_EXPORTER_VERSION="1.8.2"
 GRAFANA_VERSION="11.2.0"
+# Получение реального IP сервера
+SERVER_IP=$(hostname -I | awk '{print $1}')
 
 # Установка Prometheus
-show "Установка Prometheus..."
-cd /tmp
-wget -q https://github.com/prometheus/prometheus/releases/download/v$PROMETHEUS_VERSION/prometheus-$PROMETHEUS_VERSION.linux-amd64.tar.gz
-tar xvfz prometheus-$PROMETHEUS_VERSION.linux-amd64.tar.gz > /dev/null
-mv prometheus-$PROMETHEUS_VERSION.linux-amd64/prometheus /usr/bin/
-rm -rf /tmp/prometheus*
-mkdir -p /etc/prometheus /etc/prometheus/data
+prometheus_install() {
+    show "Установка Prometheus версии $PROMETHEUS_VERSION..."
 
-# Создание файла конфигурации для Prometheus
-cat <<EOF> /etc/prometheus/prometheus.yml
+    # Скачивание и установка
+    cd /tmp || { show_war "❌ Не удалось перейти в /tmp"; exit 1; }
+    wget -q https://github.com/prometheus/prometheus/releases/download/v$PROMETHEUS_VERSION/prometheus-$PROMETHEUS_VERSION.linux-amd64.tar.gz || { show_war "❌ Ошибка при скачивании Prometheus."; exit 1; }
+    tar xvfz prometheus-$PROMETHEUS_VERSION.linux-amd64.tar.gz > /dev/null || { show_war "❌ Ошибка при распаковке архива."; exit 1; }
+    mv prometheus-$PROMETHEUS_VERSION.linux-amd64/prometheus /usr/bin/ || { show_war "❌ Ошибка при перемещении Prometheus."; exit 1; }
+    rm -rf /tmp/prometheus* || { show_war "❌ Ошибка при очистке временных файлов."; exit 1; }
+
+    # Создание директорий
+    mkdir -p /etc/prometheus /etc/prometheus/data || { show_war "❌ Ошибка при создании директорий."; exit 1; }
+
+    # Создание конфигурационного файла
+    cat <<EOF > /etc/prometheus/prometheus.yml
 global:
   scrape_interval: 15s
 scrape_configs:
@@ -151,12 +164,14 @@ scrape_configs:
       - targets: ["localhost:9090"]
 EOF
 
-# Настройка пользователя и прав для Prometheus
-useradd -rs /bin/false prometheus
-chown -R prometheus:prometheus /usr/bin/prometheus /etc/prometheus
+    # Настройка пользователя
+    if ! id -u prometheus &>/dev/null; then
+        useradd -rs /bin/false prometheus
+    fi
+    chown -R prometheus:prometheus /usr/bin/prometheus /etc/prometheus || { show_war "❌ Ошибка при настройке прав."; exit 1; }
 
-# Создание и включение службы Prometheus
-cat <<EOF> /etc/systemd/system/prometheus.service
+    # Создание службы
+    cat <<EOF > /etc/systemd/system/prometheus.service
 [Unit]
 Description=Prometheus Server
 After=network.target
@@ -174,24 +189,33 @@ ExecStart=/usr/bin/prometheus \
 WantedBy=multi-user.target
 EOF
 
-systemctl daemon-reload
-systemctl start prometheus
-systemctl enable prometheus
+    # Запуск и включение службы
+    systemctl daemon-reload || { show_war "❌ Ошибка systemctl daemon-reload."; exit 1; }
+    systemctl start prometheus || { show_war "❌ Ошибка запуска Prometheus."; exit 1; }
+    systemctl enable prometheus || { show_war "❌ Ошибка включения автозапуска Prometheus."; exit 1; }
 
-# Установка Node Exporter
-show "Установка Node Exporter..."
-cd /tmp
-wget -q https://github.com/prometheus/node_exporter/releases/download/v$NODE_EXPORTER_VERSION/node_exporter-$NODE_EXPORTER_VERSION.linux-amd64.tar.gz
-tar xvfz node_exporter-$NODE_EXPORTER_VERSION.linux-amd64.tar.gz > /dev/null
-mv node_exporter-$NODE_EXPORTER_VERSION.linux-amd64/node_exporter /usr/bin/
-rm -rf /tmp/node_exporter*
+    show_bold "✅ Prometheus установлен и запущен успешно."
+    echo ""
+}
 
-# Настройка пользователя и прав для Node Exporter
-useradd -rs /bin/false node_exporter
-chown node_exporter:node_exporter /usr/bin/node_exporter
+node_exporter_install() {
+    show "Установка Node Exporter версии $NODE_EXPORTER_VERSION..."
 
-# Создание и включение службы Node Exporter
-cat <<EOF> /etc/systemd/system/node_exporter.service
+    # Скачивание и установка
+    cd /tmp || { show_war "❌ Не удалось перейти в /tmp"; exit 1; }
+    wget -q https://github.com/prometheus/node_exporter/releases/download/v$NODE_EXPORTER_VERSION/node_exporter-$NODE_EXPORTER_VERSION.linux-amd64.tar.gz || { show_war "❌ Ошибка при скачивании Node Exporter."; exit 1; }
+    tar xvfz node_exporter-$NODE_EXPORTER_VERSION.linux-amd64.tar.gz > /dev/null || { show_war "❌ Ошибка при распаковке архива."; exit 1; }
+    mv node_exporter-$NODE_EXPORTER_VERSION.linux-amd64/node_exporter /usr/bin/ || { show_war "❌ Ошибка при перемещении Node Exporter."; exit 1; }
+    rm -rf /tmp/node_exporter* || { show_war "❌ Ошибка при очистке временных файлов."; exit 1; }
+
+    # Создание пользователя
+    if ! id -u node_exporter &>/dev/null; then
+        useradd -rs /bin/false node_exporter || { show_war "❌ Ошибка при создании пользователя node_exporter."; exit 1; }
+    fi
+    chown node_exporter:node_exporter /usr/bin/node_exporter || { show_war "❌ Ошибка при настройке прав."; exit 1; }
+
+    # Создание службы
+    cat <<EOF > /etc/systemd/system/node_exporter.service
 [Unit]
 Description=Prometheus Node Exporter
 After=network.target
@@ -207,102 +231,237 @@ ExecStart=/usr/bin/node_exporter
 WantedBy=multi-user.target
 EOF
 
-systemctl daemon-reload
-systemctl start node_exporter
-systemctl enable node_exporter
+    # Запуск службы
+    systemctl daemon-reload || { show_war "❌ Ошибка systemctl daemon-reload."; exit 1; }
+    systemctl start node_exporter || { show_war "❌ Ошибка запуска Node Exporter."; exit 1; }
+    systemctl enable node_exporter || { show_war "❌ Ошибка включения автозапуска Node Exporter."; exit 1; }
 
-# Установка Grafana
-show "Установка Grafana..."
-apt-get install -y apt-transport-https software-properties-common wget > /dev/null
-mkdir -p /etc/apt/keyrings/
-wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
-echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list > /dev/null
-apt-get update > /dev/null 2>&1
-apt-get install -y adduser libfontconfig1 musl > /dev/null 2>&1
-wget -q https://dl.grafana.com/oss/release/grafana_${GRAFANA_VERSION}_amd64.deb
-dpkg -i grafana_${GRAFANA_VERSION}_amd64.deb > /dev/null 2>&1
-echo "export PATH=/usr/share/grafana/bin:$PATH" >> /etc/profile
+    show_bold "✅ Node Exporter установлен и запущен успешно."
+    echo ""
+}
 
-# Настройка источника данных Prometheus в Grafana
-show "Настройка источника данных Prometheus в Grafana..."
+grafana_install() {
+    # Установка Grafana
+    show "Установка Grafана..."
+    apt-get install -y apt-transport-https software-properties-common wget > /dev/null || { show_war "❌ Ошибка: Не удалось установить зависимости для Grafana."; return 1; }
+    mkdir -p /etc/apt/keyrings/ || { show_war "❌ Ошибка: Не удалось создать папку /etc/apt/keyrings."; return 1; }
+    wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor > /etc/apt/keyrings/grafana.gpg || { show_war "❌ Ошибка: Не удалось скачать ключ для Grafana."; return 1; }
+    echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" > /etc/apt/sources.list.d/grafana.list
+    apt-get update > /dev/null || { show_war "❌ Ошибка: Не удалось обновить репозитории."; return 1; }
+    apt-get install -y grafana || { show_war "❌ Ошибка: Не удалось установить Grafana."; return 1; }
 
-# Получение реального IP сервера
-PROMETHEUS_IP=$(hostname -I | awk '{print $1}')
-
-cat <<EOF> /etc/grafana/provisioning/datasources/prometheus.yaml
+    # Настройка источника данных Prometheus в Grafana
+    show "Настройка источника данных Prometheus в Grafana..."
+    mkdir -p /etc/grafana/provisioning/datasources
+    PROMETHEUS_IP=$(hostname -I | awk '{print $1}')
+    cat <<EOF > /etc/grafana/provisioning/datasources/prometheus.yaml
 apiVersion: 1
 datasources:
   - name: Prometheus
     type: prometheus
     url: http://$PROMETHEUS_IP:9090
+    access: proxy
+    isDefault: true
 EOF
 
-# Запрос порта для Grafana
-show_war "! Переключи раскладку клавиатуры на ENG"
-show_war "! Для удаления введеных данных нажми CTRL+U"
-echo -en "${TERRACOTTA}${BOLD}Введи порт для Grafana (по умолчанию 3000): ${NC}"
-read GRAFANA_PORT
-GRAFANA_PORT=${GRAFANA_PORT:-3000}
+    # Запрос порта для Grafana
+    echo -en "${TERRACOTTA}${BOLD}Введи порт для Grafana (по умолчанию 3010): ${NC}"
+    read GRAFANA_PORT
+    GRAFANA_PORT=${GRAFANA_PORT:-3010}
 
-# Замена порта в файле конфигурации Grafana
-sed -i "s/;http_port = 3000/http_port = $GRAFANA_PORT/" /etc/grafana/grafana.ini
+    # Замена порта в файле конфигурации Grafana
+    sed -i "s/;http_port = 3000/http_port = $GRAFANA_PORT/" /etc/grafana/grafana.ini || { show_war "❌ Ошибка: Не удалось изменить порт Grafana."; return 1; }
 
-# Запуск и включение Grafana
-systemctl daemon-reload
-systemctl enable grafana-server > /dev/null
-systemctl start grafana-server > /dev/null
+    # Запуск и включение Grafana
+    systemctl daemon-reload
+    systemctl enable grafana-server > /dev/null || { show_war "❌ Ошибка: Не удалось включить Grafana в автозагрузку."; return 1; }
+    systemctl start grafana-server > /dev/null || { show_war "❌ Ошибка: Не удалось запустить Grafana."; return 1; }
+    show_bold "✅ Grafana успешно установлена и запущена на порту $GRAFANA_PORT."
+    echo ""
 
-# Запрос основного сервера и добавление в Prometheus
-echo -en "${TERRACOTTA}${BOLD}Введи имя основного сервера (на который сейчас происходит установка): ${NC}"
-read MAIN_SERVER_NAME
+}
 
-# Получение реального IP сервера
-SERVER_IP=$(hostname -I | awk '{print $1}')
+configure_prometheus() {
+    local prometheus_config_path="/etc/prometheus/prometheus.yml"
 
-cat <<EOF >> /etc/prometheus/prometheus.yml
-  - job_name: "$MAIN_SERVER_NAME"
+    # Проверяем, существует ли файл конфигурации Prometheus
+    if [[ ! -f "$prometheus_config_path" ]]; then
+        show "Создание нового файла конфигурации Prometheus..."
+        cat <<EOF > "$prometheus_config_path"
+global:
+  scrape_interval: 15s
+scrape_configs:
+  - job_name: "nodateka"
     static_configs:
-      - targets: ["$SERVER_IP:9100"]
+      - targets: ["localhost:9090"]
 EOF
-
-# Запрос дополнительных серверов для мониторинга
-while true; do
-    echo -en "${TERRACOTTA}${BOLD}Хочешь добавить еще один сервер для мониторинга? (Y/N): ${NC}" 
-    read ADD_SERVER
-    if [[ "$ADD_SERVER" =~ ^[Yy]$ ]]; then
-        echo -en "${TERRACOTTA}${BOLD}Введи IP адрес сервера: ${NC}"
-        read SERVER_IP
-        echo -en "${TERRACOTTA}${BOLD}Введи имя сервера: ${NC}"
-        read SERVER_NAME
-        show "Добавлен сервер: $SERVER_NAME с IP: $SERVER_IP"
-
-        # Добавление конфигурации для нового сервера в prometheus.yml
-        cat <<EOF >> /etc/prometheus/prometheus.yml
-  - job_name: "$SERVER_NAME"
-    static_configs:
-      - targets: ["$SERVER_IP:9100"]
-EOF
-
-    else
-        break
+        show_bold "✅ Базовая конфигурация создана в $prometheus_config_path."
+        echo ""
     fi
-done
 
-# Проверка статуса сервисов
-systemctl restart prometheus > /dev/null 2>&1
-systemctl restart node_exporter > /dev/null 2>&1
-systemctl restart grafana-server > /dev/null 2>&1
-systemctl status prometheus > /dev/null 2>&1
-systemctl status node_exporter > /dev/null 2>&1
-systemctl status grafana-server > /dev/null 2>&1
+    # Добавление основного сервера
+    echo -en "${TERRACOTTA}${BOLD}Введи имя основного сервера (на который сейчас происходит установка): ${NC}"
+    read MAIN_SERVER_NAME
 
-# Получение реального IP сервера
-SERVER_IP=$(hostname -I | awk '{print $1}')
+    # Проверка на существование записи основного сервера
+    if ! grep -q "$MAIN_SERVER_NAME" "$prometheus_config_path"; then
+        SERVER_IP=$(hostname -I | awk '{print $1}')
+        cat <<EOF >> "$prometheus_config_path"
+      - targets: ["$SERVER_IP:9100"]
+        labels:
+          label: "$MAIN_SERVER_NAME"
+EOF
+        show_bold "✅ Ведущий сервер $MAIN_SERVER_NAME добавлен в Prometheus с IP: $SERVER_IP."
+        echo ""
+    else
+        show_war "⚠️ Ведущий сервер $MAIN_SERVER_NAME уже существует в конфигурации Prometheus."
+        echo ""
+    fi
+}
 
-# Вывод информации о завершении установки
-echo -e "${TERRACOTTA}${BOLD}Установка завершена.\n"
-echo -en "${TERRACOTTA}${BOLD}Теперь ты можешь мониторить состояние своих серверов в Grafana по адресу: ${NC}${LIGHT_BLUE}http://$SERVER_IP:$GRAFANA_PORT${NC}\n\n"
-echo -en "${TERRACOTTA}${BOLD}Присоединяйся к Нодатеке, будем ставить ноды вместе! ${NC}${LIGHT_BLUE}https://t.me/cryptotesemnikov/778${NC}\n"
+
+
+add_server() {
+    # Путь к файлу конфигурации Prometheus
+    local prometheus_config_path="/etc/prometheus/prometheus.yml"
+
+    # Проверяем, существует ли файл
+    if [[ ! -f "$prometheus_config_path" ]]; then
+        show_war "❌ Файл $prometheus_config_path не найден. Убедитесь, что Prometheus установлен и файл существует."
+        return 1
+    fi
+
+    # Цикл для добавления серверов
+    while true; do
+        if confirm "Хочешь добавить сервер для мониторинга?"; then
+            echo -en "${TERRACOTTA}${BOLD}Введи IP адрес сервера: ${NC}"
+            read SERVER_IP
+
+            # Проверка корректности IP-адреса
+            if [[ ! "$SERVER_IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+                show_war "❌ Некорректный IP адрес: $SERVER_IP. Попробуй снова."
+                continue
+            fi
+
+            echo -en "${TERRACOTTA}${BOLD}Введи метку для сервера (например My_Server): ${NC}"
+            read SERVER_LABEL
+
+            # Проверяем наличие секции scrape_configs
+            if ! grep -q "scrape_configs:" "$prometheus_config_path"; then
+                show_war "❌ Файл $prometheus_config_path некорректный: отсутствует секция scrape_configs."
+                return 1
+            fi
+
+            # Добавление нового сервера с меткой в файл конфигурации
+            cat <<EOF >> "$prometheus_config_path"
+      - targets: ["$SERVER_IP:9100"]
+        labels:
+          label: "$SERVER_LABEL"
+EOF
+            show_bold "✅ Сервер $SERVER_IP с меткой $SERVER_LABEL успешно добавлен."
+            echo ""
+        else
+            echo ""
+            show_bold "✅ Добавление серверов завершено."
+            echo ""
+            break
+        fi
+    done
+
+    show_bold "✅ Файл конфигурации $prometheus_config_path успешно обновлен."
+    echo ""
+
+     # Перезапуск службы Prometheus
+    systemctl restart prometheus
+    if [[ $? -eq 0 ]]; then
+        show_bold "✅ Служба Prometheus успешно перезапущена."
+    else
+        show_war "❌ Ошибка при перезапуске службы Prometheus."
+    fi
+}
+
+check_status() {
+    # Список сервисов для проверки
+    declare -A services=(
+        ["Prometheus"]="prometheus"
+        ["Node Exporter"]="node_exporter"
+        ["Grafana"]="grafana-server"
+    )
+
+    show "Проверка статуса сервисов..."
+    for service_name in "${!services[@]}"; do
+        if systemctl is-active --quiet "${services[$service_name]}"; then
+            show_bold "✅ $service_name успешно работает."
+            echo ""
+        else
+            show_war "❌ $service_name не запущен. Проверьте конфигурацию."
+
+            # Попытка запустить сервис, если он не работает
+            show "⚠️ Попытка запустить $service_name..."
+            systemctl start "${services[$service_name]}"
+            if systemctl is-active --quiet "${services[$service_name]}"; then
+                show_bold "✅ $service_name успешно запущен после исправления."
+                echo ""
+            else
+                show_war "❌ Не удалось запустить $service_name. Проверьте журнал с помощью команды: journalctl -u ${services[$service_name]}"
+            fi
+        fi
+    done
+}
+
+delete_monitoring() {
+    # Удаление службы Prometheus
+    if systemctl is-active --quiet prometheus; then
+        show "Остановка службы Prometheus..."
+        systemctl stop prometheus || { show_war "❌ Ошибка: Не удалось остановить Prometheus."; }
+    fi
+    show "Удаление службы Prometheus..."
+    systemctl disable prometheus > /dev/null 2>&1
+    rm -f /etc/systemd/system/prometheus.service
+    rm -rf /usr/bin/prometheus /etc/prometheus
+    show_bold "✅ Prometheus удалён."
+    echo ""
+
+    # Удаление службы Node Exporter
+    if systemctl is-active --quiet node_exporter; then
+        show "Остановка службы Node Exporter..."
+        systemctl stop node_exporter || { show_war "❌ Ошибка: Не удалось остановить Node Exporter."; }
+    fi
+    show "Удаление службы Node Exporter..."
+    systemctl disable node_exporter > /dev/null 2>&1
+    rm -f /etc/systemd/system/node_exporter.service
+    rm -f /usr/bin/node_exporter
+    show_bold "✅ Node Exporter удалён."
+    echo ""
+
+    # Удаление Grafana
+    if systemctl is-active --quiet grafana-server; then
+        show "Остановка службы Grafana..."
+        systemctl stop grafana-server || { show_war "❌ Ошибка: Не удалось остановить Grafana."; }
+    fi
+    show "Удаление службы Grafana..."
+    systemctl disable grafana-server > /dev/null 2>&1
+    rm -f /etc/systemd/system/grafana-server.service
+    rm -rf /etc/grafana /var/lib/grafana /var/log/grafana /usr/sbin/grafana-server
+    show_bold "✅ Grafana удалена."
+    echo ""
+
+    # Удаление остатков
+    show "Очистка временных файлов..."
+    rm -rf /tmp/prometheus* /tmp/node_exporter*
+    apt-get remove --purge -y grafana || { show_war "❌ Ошибка: Не удалось удалить пакет Grafana."; }
+    apt-get autoremove -y
+
+    # Перезагрузка systemctl
+    show "Обновление конфигурации systemctl..."
+    systemctl daemon-reload
+    systemctl reset-failed
+
+    show_bold "✅ Все компоненты успешно удалены."
+    echo ""
+}
+
+
 
 ################################################################################################
 
@@ -315,41 +474,31 @@ menu() {
 
     case $1 in
         1)  
-            # Установка ноды
-            install_dependencies
-            clone_repository
-            configure_files
-            start_screen_session
-            install_foundry
-            install_project_dependencies
-            call_contract
+            # Установка на ведущий сервер
+            prometheus_install
+            node_exporter_install
+            grafana_install
+            configure_prometheus
+            add_server
+            check_status
             ;;
         2)  
-            # Изменение настроек и перезапуск ноды
-            change_settings
-            cp "$HELLO_CONFIG_PATH" "$CONFIG_PATH"
-            restart_node
+            # Установка на ведомый сервер
+             node_exporter_install
             ;;
         3)  
-            # Замена RPC URL
-            replace_rpc_url
+            # Добавление ведомых серверов
+            add_server
+            check_status
             ;;
         4)  
-            # Просмотр запущенных контейнеров
-            docker ps -a | grep infernet
+            # Просмотр статуса служб
+            check_status
             ;;
-        5)  
-            # Просмотр логов ноды
-            docker logs -f --tail 20 infernet-node
-            ;;
-        6)  
-            # Перезапуск контейнеров
-            show "Перезапуск контейнеров..."
-            restart_node
-            ;;
+        
         9)  
             # Удаление ноды с подтверждением
-            delete_node
+            delete_monitoring
             ;;
         0)  
             # Выход с финальным сообщением
