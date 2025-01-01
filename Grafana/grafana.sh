@@ -634,10 +634,12 @@ show_link() {
    
     # Удаление ANSI-кодов для расчета длины строки
     LINE1_STRIPPED=$(echo -e "$LINE1" | sed 's/\x1b\[[0-9;]*m//g')
-    echo "$LINE1_STRIPPED"
     LINE2_STRIPPED=$(echo -e "$LINE2" | sed 's/\x1b\[[0-9;]*m//g')
-    echo "$LINE2_STRIPPED"
 
+    # Рассчитываем длину строк без ANSI-кодов
+    LINE1_LENGTH=${#LINE1_STRIPPED}
+    LINE2_LENGTH=${#LINE2_STRIPPED}
+    
     # Добавляем пробелы для выравнивания
     LINE1_PADDING=$((MAX_WIDTH - 4 - LINE1_LENGTH))
     LINE2_PADDING=$((MAX_WIDTH - 4 - LINE2_LENGTH))
