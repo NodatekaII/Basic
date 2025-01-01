@@ -631,27 +631,25 @@ show_link() {
     MAX_WIDTH=70 # Задаем фиксированную ширину рамки
     # Сообщения для вывода
     LINE1="${TERRACOTTA}${BOLD} 💡 Мониторинг доступен по ссылке: ${NC}${LIGHT_BLUE} http://$SERVER_IP:$GRAFANA_PORT/${NC}"
-    LINE2="${TERRACOTTA}${BOLD} Login: ${NC}${LIGHT_BLUE}admin  ${NC} ${TERRACOTTA}${BOLD}Password: ${NC}${LIGHT_BLUE}admin${NC}"
+    LINE2="${TERRACOTTA}${BOLD} Login: ${NC}${LIGHT_BLUE}$LOGIN  ${NC} ${TERRACOTTA}${BOLD}Password: ${NC}${LIGHT_BLUE}$PASSWORD${NC}"
+   
     # Формируем строки с отступами
-    #LINE1_PADDED=$(printf "║ %-*s ║" $((FIXED_WIDTH - 4)) "$LINE1")
-    #LINE2_PADDED=$(printf "║ %-*s ║" $((FIXED_WIDTH - 4)) "$LINE2")
-    LINE1_PADDED=$(printf "║ %-*s ║" $((FIXED_WIDTH - 4)) "$(echo -e "$LINE1")")
-    LINE2_PADDED=$(printf "║ %-*s ║" $((FIXED_WIDTH - 4)) "$(echo -e "$LINE2")")
+    LINE1_PADDED=$(printf "║ %-*s ║" $((MAX_WIDTH - 4)) "$(echo -e "$LINE1")")
+    LINE2_PADDED=$(printf "║ %-*s ║" $((MAX_WIDTH - 4)) "$(echo -e "$LINE2")")
+
 
     # Верхняя и нижняя границы
-    BORDER_TOP="╔$(printf '═%.0s' $(seq 1 $((FIXED_WIDTH - 2))))╗"
-    BORDER_BOTTOM="╚$(printf '═%.0s' $(seq 1 $((FIXED_WIDTH - 2))))╝"
-    # Верхняя и нижняя границы с цветом
-    BORDER_TOP="${TERRACOTTA}╔$(printf '═%.0s' $(seq 1 $((FIXED_WIDTH - 2))))╗${NC}"
-    BORDER_BOTTOM="${TERRACOTTA}╚$(printf '═%.0s' $(seq 1 $((FIXED_WIDTH - 2))))╝${NC}"
+    BORDER_TOP="${TERRACOTTA}╔$(printf '═%.0s' $(seq 1 $((MAX_WIDTH - 2))))╗${NC}"
+    BORDER_BOTTOM="${TERRACOTTA}╚$(printf '═%.0s' $(seq 1 $((MAX_WIDTH - 2))))╝${NC}"
 
 
     # Вывод рамки
-    echo "$BORDER_TOP"
-    echo "$LINE1_PADDED"
-    echo "$LINE2_PADDED"
-    echo "$BORDER_BOTTOM"
+    echo -e "$BORDER_TOP"
+    echo -e "${TERRACOTTA}$LINE1_PADDED${NC}"
+    echo -e "${TERRACOTTA}$LINE2_PADDED${NC}"
+    echo -e "$BORDER_BOTTOM"
 
+    
     #show_bold "╔═══════════════════════════════════════════════════════════════════╗"
     #echo ""
     #echo -en "${TERRACOTTA}${BOLD}║ 💡 Мониторинг доступен по ссылке: ${NC}${LIGHT_BLUE} http://$SERVER_IP:$GRAFANA_PORT/${NC}${TERRACOTTA}${BOLD}     ║${NC}\n"
