@@ -112,7 +112,7 @@ show_name() {
    show_green '░░░░░░█░▄▄░█▄▄▀░█▀▀█░█▀▀░█▀▀█░█░█░█░█▀▀█░░░░░░▀▀▄▄░█░░█░█▀▀░░█░░░░░░░'
    show_green '░░░░░░█▄▄█░█░░█░█░░█░█░░░█░░█░█░░▀█░█░░█░░░░░░█▄▄█░█▄▄█░█░░░░█░░░░░░░'
    show_green '---------------------------------------------------------------------'
-   #show_white '                                                 script version: v0.2'
+   show_white '                                                 script version: v0.2'
    echo ""
 }
 
@@ -531,8 +531,10 @@ remove_server() {
 
             mv "$temp_file" "$prometheus_config_path"
             show_bold "✅ Сервер $OLD_SERVER_IP успешно удалён из конфигурационного файла."
+            echo ""
         else
             show_bold "✅ Удаление серверов завершено."
+            echo ""
             break
         fi
     done
@@ -541,6 +543,7 @@ remove_server() {
     systemctl restart prometheus
     if [[ $? -eq 0 ]]; then
         show_bold "✅ Служба Prometheus успешно перезапущена."
+        echo ""
     else
         show_war "❌ Ошибка при перезапуске службы Prometheus."
     fi
