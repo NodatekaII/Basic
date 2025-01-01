@@ -111,7 +111,7 @@ show_name() {
    show_green '░░░░░░█░▄▄░█▄▄▀░█▀▀█░█▀▀░█▀▀█░█░█░█░█▀▀█░░░░░░▀▀▄▄░█░░█░█▀▀░░█░░░░░░░'
    show_green '░░░░░░█▄▄█░█░░█░█░░█░█░░░█░░█░█░░▀█░█░░█░░░░░░█▄▄█░█▄▄█░█░░░░█░░░░░░░'
    show_green '---------------------------------------------------------------------'
-   show_white '                                                 script version: v0.2'
+   #show_white '                                                 script version: v0.2'
    echo ""
 }
 
@@ -489,7 +489,7 @@ remove_server() {
     # Удаление сервера
     while true; do
         if confirm "Хочешь удалить сервер из мониторинга?"; then
-            show_bold "Введи IP адрес сервера, который нужно удалить:"
+            show_bold "Введи IP адрес сервера, который нужно удалить: "
             read OLD_SERVER_IP
             echo ""
 
@@ -517,7 +517,12 @@ remove_server() {
                 }
                 skip && /labels:/ { next }
                 skip && /^[[:space:]]*$/ { skip=0; next }
-                {if (!skip) print $0}
+                {
+                    if (!skip) print $0
+                }
+                END {
+                    if (skip) skip=0
+                }
             ' "$prometheus_config_path" > "$temp_file"
 
             mv "$temp_file" "$prometheus_config_path"
@@ -539,6 +544,7 @@ remove_server() {
         show_war "❌ Ошибка при перезапуске службы Prometheus."
     fi
 }
+
 
 
 
