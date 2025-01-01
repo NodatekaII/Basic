@@ -630,14 +630,14 @@ show_link() {
     PASSWORD="admin"
     MAX_WIDTH=70 # Задаем фиксированную ширину рамки
     # Сообщения для вывода
-    LINE1="${TERRACOTTA}${BOLD} 💡 Мониторинг доступен по ссылке: ${NC}${LIGHT_BLUE} http://$SERVER_IP:$GRAFANA_PORT/${NC}"
+    LINE1="${TERRACOTTA}${BOLD} Мониторинг доступен по ссылке: ${NC}${LIGHT_BLUE} http://$SERVER_IP:$GRAFANA_PORT/${NC}"
     LINE2="${TERRACOTTA}${BOLD} Login: ${NC}${LIGHT_BLUE}$LOGIN  ${NC} ${TERRACOTTA}${BOLD}Password: ${NC}${LIGHT_BLUE}$PASSWORD${NC}"
    
     # Удаление ANSI-кодов для расчета длины строки
     LINE1_STRIPPED=$(echo -e "$LINE1" | sed 's/\x1b\[[0-9;]*m//g')
     echo "$LINE1_STRIPPED"
     LINE2_STRIPPED=$(echo -e "$LINE2" | sed 's/\x1b\[[0-9;]*m//g')
-    echo "$LINE1_STRIPPED"
+    echo "$LINE2_STRIPPED"
 
     # Рассчитываем длину строк без ANSI-кодов
     LINE1_LENGTH=${#LINE1_STRIPPED}
