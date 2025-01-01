@@ -489,7 +489,7 @@ remove_server() {
     # Удаление сервера
     while true; do
         if confirm "Хочешь удалить сервер из мониторинга?"; then
-            show_bold "Введи IP адрес сервера, который нужно удалить:"
+            show_bold "Введи IP адрес сервера, который нужно удалить: "
             read OLD_SERVER_IP
             echo ""
 
