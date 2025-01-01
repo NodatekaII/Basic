@@ -481,8 +481,9 @@ remove_server() {
     fi
 
     show_bold "Список добавленных серверов: "
+    echo ""
     paste <(echo "$SERVERS") <(echo "$SERVER_NAMES") | while IFS=$'\t' read -r server name; do
-        echo -e "${TERRACOTTA}${BOLD}IP: ${NC}${GREEN}$server${NC}   ${TERRACOTTA}${BOLD}Label: ${NC}${GREEN}$$name${NC}"
+        echo -e "${TERRACOTTA}${BOLD}IP: ${NC}${GREEN}$server${NC}   ${TERRACOTTA}${BOLD}Label: ${NC}${GREEN}$name${NC}"
     done
 
     # Удаление сервера
