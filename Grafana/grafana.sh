@@ -111,7 +111,7 @@ show_name() {
    show_green '░░░░░░█░▄▄░█▄▄▀░█▀▀█░█▀▀░█▀▀█░█░█░█░█▀▀█░░░░░░▀▀▄▄░█░░█░█▀▀░░█░░░░░░░'
    show_green '░░░░░░█▄▄█░█░░█░█░░█░█░░░█░░█░█░░▀█░█░░█░░░░░░█▄▄█░█▄▄█░█░░░░█░░░░░░░'
    show_green '---------------------------------------------------------------------'
-   show_white '                                                 script version: v0.2'
+   #show_white '                                                 script version: v0.2'
    echo ""
 }
 
@@ -635,21 +635,24 @@ show_link() {
    
     # Удаление ANSI-кодов для расчета длины строки
     LINE1_STRIPPED=$(echo -e "$LINE1" | sed 's/\x1b\[[0-9;]*m//g')
+    echo "$LINE1_STRIPPED"
     LINE2_STRIPPED=$(echo -e "$LINE2" | sed 's/\x1b\[[0-9;]*m//g')
+    echo "$LINE1_STRIPPED"
 
     # Рассчитываем длину строк без ANSI-кодов
     LINE1_LENGTH=${#LINE1_STRIPPED}
+    echo "$LINE1_LENGTH"
     LINE2_LENGTH=${#LINE2_STRIPPED}
+    echo "$LINE2_LENGTH"
 
-    # Добавляем пробелы для выравнивания
-    LINE1_PADDED=$(printf "║ %-*s ║" $((MAX_WIDTH - 4)) "$(echo -e "$LINE1")")
-    LINE2_PADDED=$(printf "║ %-*s ║" $((MAX_WIDTH - 4)) "$(echo -e "$LINE2")")
+    # Добавляем пробелы для выравнивания с учетом ANSI-кодов
+    LINE1_PADDING=$((MAX_WIDTH - 4 - LINE1_LENGTH))
+    LINE2_PADDING=$((MAX_WIDTH - 4 - LINE2_LENGTH))
 
-    
-    
-    # Формируем строки с отступами
-    #LINE1_PADDED=$(printf "║ %-*s ║" $((MAX_WIDTH - 4)) "$LINE1")
-    #LINE2_PADDED=$(printf "║ %-*s ║" $((MAX_WIDTH - 4)) "$LINE2")
+    LINE1_PADDED=$(printf "║ %s%*s ║" "$(echo -e "$LINE1")" "$LINE1_PADDING" "")
+    LINE2_PADDED=$(printf "║ %s%*s ║" "$(echo -e "$LINE2")" "$LINE2_PADDING" "")
+
+   
 
 
     # Верхняя и нижняя границы
