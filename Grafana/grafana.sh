@@ -150,7 +150,7 @@ PROMETHEUS_VERSION="2.54.1"
 NODE_EXPORTER_VERSION="1.8.2"
 GRAFANA_VERSION="11.2.0"
 # Получение реального IP сервера
-SERVER_IP=$(hostname -I | awk '{print $1}')
+SERVER_IP=$(curl -s https://ipinfo.io/ip)
 
 # Установка Prometheus
 prometheus_install() {
@@ -265,7 +265,7 @@ grafana_install() {
     # Настройка источника данных Prometheus в Grafana
     show "Настройка источника данных Prometheus в Grafana..."
     mkdir -p /etc/grafana/provisioning/datasources
-    PROMETHEUS_IP=$(hostname -I | awk '{print $1}')
+    PROMETHEUS_IP=$SERVER_IP
     cat <<EOF > /etc/grafana/provisioning/datasources/prometheus.yaml
 apiVersion: 1
 datasources:
@@ -339,7 +339,7 @@ providers:
 EOF
 
     # Конфигурация источника данных Prometheus
-    PROMETHEUS_IP=$(hostname -I | awk '{print $1}')
+    PROMETHEUS_IP=$SERVER_IP
     cat <<EOF > /etc/grafana/provisioning/datasources/prometheus.yaml
 apiVersion: 1
 datasources:
@@ -416,11 +416,11 @@ add_server() {
     while true; do
         if confirm "Хочешь добавить сервер для мониторинга?"; then
             echo -en "${TERRACOTTA}${BOLD}Введи IP адрес сервера: ${NC}"
-            read SERVER_IP
+            read NEW_SERVER_IP
 
             # Проверка корректности IP-адреса
-            if [[ ! "$SERVER_IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-                show_war "❌ Некорректный IP адрес: $SERVER_IP. Попробуй снова."
+            if [[ ! "$NEW_SERVER_IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+                show_war "❌ Некорректный IP адрес: $NEW_SERVER_IP. Попробуй снова."
                 continue
             fi
 
@@ -435,11 +435,11 @@ add_server() {
 
             # Добавление нового сервера с меткой в файл конфигурации
             cat <<EOF >> "$prometheus_config_path"
-      - targets: ["$SERVER_IP:9100"]
+      - targets: ["$NEW_SERVER_IP:9100"]
         labels:
           label: "$SERVER_LABEL"
 EOF
-            show_bold "✅ Сервер $SERVER_IP с меткой $SERVER_LABEL успешно добавлен."
+            show_bold "✅ Сервер $NEW_SERVER_IP с меткой $SERVER_LABEL успешно добавлен."
             echo ""
         else
             echo ""
@@ -473,24 +473,24 @@ remove_server() {
 
     # Выводим список серверов для удаления
     echo -e "\n${TERRACOTTA}${BOLD}Список добавленных серверов:${NC}"
-    grep -A 1 "- targets:" "$prometheus_config_path" | grep -v "--" | sed 's/\s*targets:\s\[\"\(.*\):9100\"\]/\1/' | while read SERVER_IP; do
-        echo "  - $SERVER_IP"
+    grep -A 1 "- targets:" "$prometheus_config_path" | grep -v "--" | sed 's/\s*targets:\s\[\"\(.*\):9100\"\]/\1/' | while read OLD_SERVER_IP; do
+        echo "  - $OLD_SERVER_IP"
     done
 
     while true; do
         if confirm "Хочешь удалить сервер из мониторинга?"; then
             echo -en "${TERRACOTTA}${BOLD}Введи IP адрес сервера, который нужно удалить: ${NC}"
-            read SERVER_IP
+            read OLD_SERVER_IP
 
             # Проверка наличия сервера в конфигурационном файле
-            if ! grep -q "$SERVER_IP:9100" "$prometheus_config_path"; then
-                show_war "❌ Сервер с IP $SERVER_IP не найден в конфигурационном файле. Попробуй снова."
+            if ! grep -q "$OLD_SERVER_IP:9100" "$prometheus_config_path"; then
+                show_war "❌ Сервер с IP $OLD_SERVER_IP не найден в конфигурационном файле. Попробуй снова."
                 continue
             fi
 
             # Удаление сервера из конфигурации
             local temp_file="${prometheus_config_path}.tmp"
-            awk -v ip="$SERVER_IP" '\
+            awk -v ip="$OLD_SERVER_IP" '\
                 BEGIN {skip=0}
                 /- targets:/ {
                     if ($0 ~ ip ":9100") {
@@ -508,7 +508,7 @@ remove_server() {
             ' "$prometheus_config_path" > "$temp_file"
 
             mv "$temp_file" "$prometheus_config_path"
-            show_bold "✅ Сервер $SERVER_IP успешно удалён из конфигурационного файла."
+            show_bold "✅ Сервер $OLD_SERVER_IP успешно удалён из конфигурационного файла."
             echo ""
         else
             echo ""
