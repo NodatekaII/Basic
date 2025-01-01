@@ -473,20 +473,30 @@ remove_server() {
 
     # Выводим список серверов для удаления
     echo -e "\n${TERRACOTTA}${BOLD}Список добавленных серверов:${NC}"
-    grep -A 1 "- targets:" "$prometheus_config_path" | grep -v "--" | sed 's/\s*targets:\s\[\"\(.*\):9100\"\]/\1/' | while read OLD_SERVER_IP; do
+    grep -A 1 "- targets:" "$prometheus_config_path" | grep -v "--" | sed -n 's/.*targets: \["\(.*\):9100"\]/\1/p' | while read OLD_SERVER_IP; do
         echo "  - $OLD_SERVER_IP"
     done
 
+    # Начинаем процесс удаления
     while true; do
         if confirm "Хочешь удалить сервер из мониторинга?"; then
             echo -en "${TERRACOTTA}${BOLD}Введи IP адрес сервера, который нужно удалить: ${NC}"
             read OLD_SERVER_IP
+
+            # Проверка формата IP
+            if [[ ! "$OLD_SERVER_IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+                show_war "❌ Некорректный IP адрес: $OLD_SERVER_IP. Попробуй снова."
+                continue
+            fi
 
             # Проверка наличия сервера в конфигурационном файле
             if ! grep -q "$OLD_SERVER_IP:9100" "$prometheus_config_path"; then
                 show_war "❌ Сервер с IP $OLD_SERVER_IP не найден в конфигурационном файле. Попробуй снова."
                 continue
             fi
+
+            # Создаем резервную копию файла
+            cp "$prometheus_config_path" "${prometheus_config_path}.bak"
 
             # Удаление сервера из конфигурации
             local temp_file="${prometheus_config_path}.tmp"
