@@ -629,13 +629,12 @@ get_grafana_port() {
         show_war "❌ Файл конфигурации Grafana $config_file не найден."
     fi
 }
-════
-═══════════════
+
 show_link() {
     show_bold "╔═══════════════════════════════════════════════════════════════════╗"
     echo ""
-    echo -en "${TERRACOTTA}${BOLD}║ 💡 Мониторинг доступен по ссылке: ${NC}${LIGHT_BLUE} http://$SERVER_IP:$GRAFANA_PORT/     ║${NC}\n"
-    echo -en "${TERRACOTTA}${BOLD}║ Login: ${NC}${LIGHT_BLUE}admin  ${NC} ${TERRACOTTA}${BOLD}Password: ${NC}${LIGHT_BLUE}admin                   ║${NC}\n"
+    echo -en "${TERRACOTTA}${BOLD}║ 💡 Мониторинг доступен по ссылке: ${NC}${LIGHT_BLUE} http://$SERVER_IP:$GRAFANA_PORT/${NC}${TERRACOTTA}${BOLD}     ║${NC}\n"
+    echo -en "${TERRACOTTA}${BOLD}║ Login: ${NC}${LIGHT_BLUE}admin  ${NC} ${TERRACOTTA}${BOLD}Password: ${NC}${LIGHT_BLUE}admin${NC}${TERRACOTTA}${BOLD}                             ║${NC}\n"
     show_bold '╚═══════════════════════════════════════════════════════════════════╝'
     echo ""
 }
