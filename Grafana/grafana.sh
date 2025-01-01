@@ -111,7 +111,7 @@ show_name() {
    show_green '░░░░░░█░▄▄░█▄▄▀░█▀▀█░█▀▀░█▀▀█░█░█░█░█▀▀█░░░░░░▀▀▄▄░█░░█░█▀▀░░█░░░░░░░'
    show_green '░░░░░░█▄▄█░█░░█░█░░█░█░░░█░░█░█░░▀█░█░░█░░░░░░█▄▄█░█▄▄█░█░░░░█░░░░░░░'
    show_green '---------------------------------------------------------------------'
-   #show_white '                                                 script version: v0.2'
+   show_white '                                                 script version: v0.2'
    echo ""
 }
 
@@ -484,7 +484,7 @@ remove_server() {
     show_bold "Список добавленных серверов: "
     echo ""
     paste <(echo "$SERVERS") <(echo "$SERVER_NAMES") | while IFS=$'\t' read -r server name; do
-        printf "${TERRACOTTA}${BOLD}%-20s${NC} ${GREEN}%-20s${NC}\n" "IP: $server" "Label: $name"
+        printf "${TERRACOTTA}${BOLD}%-20s${NC} ${GREEN}%-20s${NC} ${TERRACOTTA}${BOLD}Label:${NC} ${GREEN}%s${NC}\n" "IP: $server" "" "$name"
     done
 
     # Удаление сервера
