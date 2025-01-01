@@ -472,7 +472,6 @@ remove_server() {
     fi
 
     # Выводим список серверов для удаления
-    
     SERVERS=$(grep -A 1 "targets:" "$prometheus_config_path" 2>/dev/null | grep "\- targets" | sed -n 's/.*targets: \[\"\(.*\):9100\"\]/\1/p')
     SERVER_NAMES=$(grep -A 2 "targets:" "$prometheus_config_path" 2>/dev/null | grep "label:" | sed -n 's/.*label: \"\(.*\)\".*/\1/p')
 
@@ -481,7 +480,7 @@ remove_server() {
         return 1
     fi
 
-    show_bold "Список добавленных серверов: "
+    show_bold "Список добавленных серверов:"
     echo ""
     paste <(echo "$SERVERS") <(echo "$SERVER_NAMES") | while IFS=$'\t' read -r server name; do
         printf "${TERRACOTTA}${BOLD}%-20s${NC} ${GREEN}%-1s${NC} ${TERRACOTTA}${BOLD}Label:${NC} ${GREEN}%s${NC}\n" "IP: $server" "" "$name"
@@ -490,7 +489,7 @@ remove_server() {
     # Удаление сервера
     while true; do
         if confirm "Хочешь удалить сервер из мониторинга?"; then
-            show_bold "Введи IP адрес сервера, который нужно удалить: "
+            show_bold "Введи IP адрес сервера, который нужно удалить:"
             read OLD_SERVER_IP
             echo ""
 
@@ -516,15 +515,8 @@ remove_server() {
                         next
                     }
                 }
-                /labels:/ {
-                    if (skip) {
-                        skip=0
-                        next
-                    }
-                }
-                /^[[:space:]]*$/ {
-                    if (skip) next
-                }
+                skip && /labels:/ { next }
+                skip && /^[[:space:]]*$/ { next }
                 {if (!skip) print $0}
             ' "$prometheus_config_path" > "$temp_file"
 
@@ -547,8 +539,6 @@ remove_server() {
         show_war "❌ Ошибка при перезапуске службы Prometheus."
     fi
 }
-
-
 
 
 check_status() {
