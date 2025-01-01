@@ -80,13 +80,6 @@ show_logotip() {
 
 #финальное сообщение
 final_message() {
-    show_bold "╔═══════════════════════════════════════════════════════════════════╗"
-    echo ""
-    echo -en "${TERRACOTTA}${BOLD}║ 💡 Мониторинг доступен по ссылке: ${NC}${LIGHT_BLUE} http://$SERVER_IP:$GRAFANA_PORT/${NC}${TERRACOTTA}${BOLD}     ║${NC}\n"
-    echo -en "${TERRACOTTA}${BOLD}║ Login: ${NC}${LIGHT_BLUE}admin  ${NC} ${TERRACOTTA}${BOLD}Password: ${NC}${LIGHT_BLUE}admin${NC}${TERRACOTTA}${BOLD}                                    ║${NC}\n"
-    show_bold '╚═══════════════════════════════════════════════════════════════════╝'
-    echo ""
-    
     echo ''
     show_bold "╔═══════════════════════════════════════════════════════════════════╗"
     echo ""
