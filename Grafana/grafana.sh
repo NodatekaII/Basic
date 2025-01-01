@@ -632,10 +632,10 @@ get_grafana_port() {
 
 show_link() {
     echo ""
-    echo -en "\e[48;5;28m${TERRACOTTA}${BOLD}💡 Мониторинг доступен по ссылке: ${NC}${LIGHT_BLUE} http://$SERVER_IP:$GRAFANA_PORT/${NC}\e[0m\n"
+    echo -en "\e[48;5;28m${TERRACOTTA}${BOLD}💡 Мониторинг доступен по ссылке: ${NC}\e[48;5;28m${LIGHT_BLUE} http://$SERVER_IP:$GRAFANA_PORT/${NC}\e[0m\n"
     #echo -en "${TERRACOTTA}${BOLD}💡 Мониторинг доступен по ссылке: ${NC}${LIGHT_BLUE} http://$SERVER_IP:$GRAFANA_PORT/${NC}\n"
     #echo -en "${TERRACOTTA}${BOLD}Login: ${NC}${LIGHT_BLUE}admin  ${NC} ${TERRACOTTA}${BOLD}Password: ${NC}${LIGHT_BLUE}admin${NC}\n"
-    echo -en "\e[48;5;28m${TERRACOTTA}${BOLD}Login: ${NC}${LIGHT_BLUE}admin  ${NC} ${TERRACOTTA}${BOLD}Password: ${NC}${LIGHT_BLUE}admin${NC}\n"
+    echo -en "\e[48;5;28m${TERRACOTTA}${BOLD}Login: ${NC}\e[48;5;28m${LIGHT_BLUE}admin  ${NC} \e[48;5;28m${TERRACOTTA}${BOLD}Password: ${NC}\e[48;5;28m${LIGHT_BLUE}admin${NC}\n"
     #show_green '░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░'
     echo ""
 }
