@@ -112,7 +112,7 @@ show_name() {
    show_green '░░░░░░█░▄▄░█▄▄▀░█▀▀█░█▀▀░█▀▀█░█░█░█░█▀▀█░░░░░░▀▀▄▄░█░░█░█▀▀░░█░░░░░░░'
    show_green '░░░░░░█▄▄█░█░░█░█░░█░█░░░█░░█░█░░▀█░█░░█░░░░░░█▄▄█░█▄▄█░█░░░░█░░░░░░░'
    show_green '---------------------------------------------------------------------'
-   show_white '                                                 script version: v0.2'
+   #show_white '                                                 script version: v0.2'
    echo ""
 }
 
@@ -486,8 +486,6 @@ remove_server() {
     echo ""
     paste <(echo "$SERVERS") <(echo "$SERVER_NAMES") | while IFS=$'\t' read -r server name; do
         printf "${TERRACOTTA}${BOLD}%-20s${NC} ${GREEN}%-1s${NC} ${TERRACOTTA}${BOLD}Label:${NC} ${GREEN}%s${NC}\n" "IP: $server" "" "$name"
-        printf "${TERRACOTTA}${BOLD}%-25s${NC} ${TERRACOTTA}${BOLD}Label: ${NC}${GREEN}%-20s${NC}\n" "IP: $server" "$name"
-
     done
 
     # Удаление сервера
@@ -509,9 +507,9 @@ remove_server() {
                 continue
             fi
 
-            # Удаление сервера
+            # Удаление сервера и связанных меток
             local temp_file="${prometheus_config_path}.tmp"
-            awk -v ip="$OLD_SERVER_IP" '\
+            awk -v ip="$OLD_SERVER_IP" '
                 BEGIN {skip=0}
                 /- targets:/ {
                     if ($0 ~ ip ":9100") {
@@ -524,6 +522,9 @@ remove_server() {
                         skip=0
                         next
                     }
+                }
+                /^[[:space:]]*$/ {
+                    if (skip) next
                 }
                 {if (!skip) print $0}
             ' "$prometheus_config_path" > "$temp_file"
@@ -544,6 +545,7 @@ remove_server() {
         show_war "❌ Ошибка при перезапуске службы Prometheus."
     fi
 }
+
 
 
 
