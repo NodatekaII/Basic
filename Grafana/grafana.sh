@@ -473,32 +473,35 @@ remove_server() {
 
     # Выводим список серверов для удаления
     echo -e "\n${TERRACOTTA}${BOLD}Список добавленных серверов:${NC}"
-    grep -A 1 "- targets:" "$prometheus_config_path" | grep -v "--" | sed -n 's/.*targets: \["\(.*\):9100"\]/\1/p' | while read OLD_SERVER_IP; do
+    SERVERS=$(grep -A 1 "targets:" "$prometheus_config_path" | grep "\- targets" | sed -n 's/.*targets: \["\(.*\):9100"\]/\1/p')
+    if [[ -z "$SERVERS" ]]; then
+        echo "❌ Серверы не найдены в конфигурационном файле."
+        return 1
+    fi
+
+    echo "$SERVERS" | while read OLD_SERVER_IP; do
         echo "  - $OLD_SERVER_IP"
     done
 
-    # Начинаем процесс удаления
+    # Удаление сервера
     while true; do
         if confirm "Хочешь удалить сервер из мониторинга?"; then
             echo -en "${TERRACOTTA}${BOLD}Введи IP адрес сервера, который нужно удалить: ${NC}"
             read OLD_SERVER_IP
 
-            # Проверка формата IP
-            if [[ ! "$OLD_SERVER_IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-                show_war "❌ Некорректный IP адрес: $OLD_SERVER_IP. Попробуй снова."
+            # Проверка на пустой ввод
+            if [[ -z "$OLD_SERVER_IP" ]]; then
+                show_war "❌ Пустой ввод. Попробуй снова."
                 continue
             fi
 
-            # Проверка наличия сервера в конфигурационном файле
-            if ! grep -q "$OLD_SERVER_IP:9100" "$prometheus_config_path"; then
+            # Проверка наличия сервера в конфигурации
+            if ! echo "$SERVERS" | grep -q "$OLD_SERVER_IP"; then
                 show_war "❌ Сервер с IP $OLD_SERVER_IP не найден в конфигурационном файле. Попробуй снова."
                 continue
             fi
 
-            # Создаем резервную копию файла
-            cp "$prometheus_config_path" "${prometheus_config_path}.bak"
-
-            # Удаление сервера из конфигурации
+            # Удаление сервера
             local temp_file="${prometheus_config_path}.tmp"
             awk -v ip="$OLD_SERVER_IP" '\
                 BEGIN {skip=0}
@@ -519,22 +522,16 @@ remove_server() {
 
             mv "$temp_file" "$prometheus_config_path"
             show_bold "✅ Сервер $OLD_SERVER_IP успешно удалён из конфигурационного файла."
-            echo ""
         else
-            echo ""
             show_bold "✅ Удаление серверов завершено."
-            echo ""
             break
         fi
     done
 
-    show_bold "✅ Файл конфигурации $prometheus_config_path успешно обновлён."
-
-    # Перезапуск службы Prometheus
+    # Перезапуск Prometheus
     systemctl restart prometheus
     if [[ $? -eq 0 ]]; then
         show_bold "✅ Служба Prometheus успешно перезапущена."
-        echo ""
     else
         show_war "❌ Ошибка при перезапуске службы Prometheus."
     fi
