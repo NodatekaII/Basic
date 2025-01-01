@@ -474,14 +474,17 @@ remove_server() {
 
     # Выводим список серверов для удаления
     echo -e "\n${TERRACOTTA}${BOLD}Список добавленных серверов:${NC}"
-    SERVERS=$(grep -A 1 "targets:" "$prometheus_config_path" | grep "\- targets" | sed -n 's/.*targets: \["\(.*\):9100"\]/\1/p')
+    SERVERS=$(awk '/- targets:/ {getline; print}' "$prometheus_config_path" | sed -n 's/.*targets: \["\(.*\):9100"\]/\1/p')
+    SERVER_NAMES=$(awk '/- targets:/ {getline; getline; if ($1 ~ /labels:/) print $0}' "$prometheus_config_path" | sed -n 's/.*label: \"\(.*\)\".*/\1/p')
+
     if [[ -z "$SERVERS" ]]; then
         echo "❌ Серверы не найдены в конфигурационном файле."
         return 1
     fi
 
-    echo "$SERVERS" | while read OLD_SERVER_IP; do
-        echo "  - $OLD_SERVER_IP"
+    echo -e "${TERRACOTTA}${BOLD}  IP адреса и имена серверов:${NC}"
+    paste <(echo "$SERVERS") <(echo "$SERVER_NAMES" | sed 's/^/ - Имя: /') | while read -r line; do
+        echo "  - $line"
     done
 
     # Удаление сервера
@@ -537,6 +540,7 @@ remove_server() {
         show_war "❌ Ошибка при перезапуске службы Prometheus."
     fi
 }
+
 
 
 check_status() {
