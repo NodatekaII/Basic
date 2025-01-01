@@ -471,7 +471,7 @@ remove_server() {
     fi
 
     # Выводим список серверов для удаления
-    echo -e "\n${TERRACOTTA}${BOLD}Список добавленных серверов:${NC}"
+    
     SERVERS=$(grep -A 1 "targets:" "$prometheus_config_path" 2>/dev/null | grep "\- targets" | sed -n 's/.*targets: \[\"\(.*\):9100\"\]/\1/p')
     SERVER_NAMES=$(grep -A 2 "targets:" "$prometheus_config_path" 2>/dev/null | grep "label:" | sed -n 's/.*label: \"\(.*\)\".*/\1/p')
 
@@ -480,16 +480,17 @@ remove_server() {
         return 1
     fi
 
-    echo -e "${TERRACOTTA}${BOLD}  IP адреса и имена серверов:${NC}"
-    paste <(echo "$SERVERS") <(echo "$SERVER_NAMES" | sed 's/^/ - Имя: /') | while read -r line; do
-        echo "  - $line"
+    show_bold "Список добавленных серверов: "
+    paste <(echo "$SERVERS") <(echo "$SERVER_NAMES") | while IFS=$'\t' read -r server name; do
+        echo -e "${TERRACOTTA}${BOLD}IP: ${NC}${GREEN}$server${NC}   ${TERRACOTTA}${BOLD}Label: ${NC}${GREEN}$$name${NC}"
     done
 
     # Удаление сервера
     while true; do
         if confirm "Хочешь удалить сервер из мониторинга?"; then
-            echo -en "${TERRACOTTA}${BOLD}Введи IP адрес сервера, который нужно удалить: ${NC}"
+            show_bold "Введи IP адрес сервера, который нужно удалить: "
             read OLD_SERVER_IP
+            echo ""
 
             # Проверка на пустой ввод
             if [[ -z "$OLD_SERVER_IP" ]]; then
