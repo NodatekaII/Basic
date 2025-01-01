@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # Проверка наличия curl и установка, если не установлен
 if ! command -v curl &> /dev/null; then
     sudo apt update
@@ -81,12 +80,23 @@ show_logotip() {
 
 #финальное сообщение
 final_message() {
+    show_bold "╔═══════════════════════════════════════════════════════════════════╗"
+    echo ""
+    echo -en "${TERRACOTTA}${BOLD}║ 💡 Мониторинг доступен по ссылке: ${NC}${LIGHT_BLUE} http://$SERVER_IP:$GRAFANA_PORT/${NC}${TERRACOTTA}${BOLD}     ║${NC}\n"
+    echo -en "${TERRACOTTA}${BOLD}║ Login: ${NC}${LIGHT_BLUE}admin  ${NC} ${TERRACOTTA}${BOLD}Password: ${NC}${LIGHT_BLUE}admin${NC}${TERRACOTTA}${BOLD}                                    ║${NC}\n"
+    show_bold '╚═══════════════════════════════════════════════════════════════════╝'
+    echo ""
+    
     echo ''
-    show_bold "Присоединяйся к Нодатеке, будем ставить ноды вместе!"
+    show_bold "╔═══════════════════════════════════════════════════════════════════╗"
+    echo ""
+    show_bold "║ Присоединяйся к Нодатеке, будем ставить ноды вместе!              ║"
     echo ''
-    echo -en "${TERRACOTTA}${BOLD}Telegram: ${NC}${LIGHT_BLUE}https://t.me/cryptotesemnikov/778${NC}\n"
-    echo -en "${TERRACOTTA}${BOLD}Twitter: ${NC}${LIGHT_BLUE}https://x.com/nodateka${NC}\n"
-    echo -e "${TERRACOTTA}${BOLD}YouTube: ${NC}${LIGHT_BLUE}https://www.youtube.com/@CryptoTesemnikov${NC}\n"
+    echo -en "${TERRACOTTA}${BOLD}║ ✈️ Telegram: ${NC}${LIGHT_BLUE}https://t.me/cryptotesemnikov/778${NC}${TERRACOTTA}${BOLD}     ║${NC}\n"
+    echo -en "${TERRACOTTA}${BOLD}║ 🐦 Twitter: ${NC}${LIGHT_BLUE}https://x.com/nodateka${NC}${TERRACOTTA}${BOLD}                       ║${NC}\n"
+    echo -e "${TERRACOTTA}${BOLD}║ ▶️ YouTube: ${NC}${LIGHT_BLUE}https://www.youtube.com/@CryptoTesemnikov${NC}${TERRACOTTA}${BOLD}     ║${NC}\n"
+    show_bold '╚═══════════════════════════════════════════════════════════════════╝'
+    echo ""
 }
 
 # Функция для подтверждения действия
@@ -634,7 +644,7 @@ show_link() {
     show_bold "╔═══════════════════════════════════════════════════════════════════╗"
     echo ""
     echo -en "${TERRACOTTA}${BOLD}║ 💡 Мониторинг доступен по ссылке: ${NC}${LIGHT_BLUE} http://$SERVER_IP:$GRAFANA_PORT/${NC}${TERRACOTTA}${BOLD}     ║${NC}\n"
-    echo -en "${TERRACOTTA}${BOLD}║ Login: ${NC}${LIGHT_BLUE}admin  ${NC} ${TERRACOTTA}${BOLD}Password: ${NC}${LIGHT_BLUE}admin${NC}${TERRACOTTA}${BOLD}                                   ║${NC}\n"
+    echo -en "${TERRACOTTA}${BOLD}║ Login: ${NC}${LIGHT_BLUE}admin  ${NC} ${TERRACOTTA}${BOLD}Password: ${NC}${LIGHT_BLUE}admin${NC}${TERRACOTTA}${BOLD}                                    ║${NC}\n"
     show_bold '╚═══════════════════════════════════════════════════════════════════╝'
     echo ""
 }
