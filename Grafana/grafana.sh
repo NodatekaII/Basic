@@ -111,7 +111,7 @@ show_name() {
    show_green '░░░░░░█░▄▄░█▄▄▀░█▀▀█░█▀▀░█▀▀█░█░█░█░█▀▀█░░░░░░▀▀▄▄░█░░█░█▀▀░░█░░░░░░░'
    show_green '░░░░░░█▄▄█░█░░█░█░░█░█░░░█░░█░█░░▀█░█░░█░░░░░░█▄▄█░█▄▄█░█░░░░█░░░░░░░'
    show_green '---------------------------------------------------------------------'
-   show_white '                                                 script version: v0.2'
+   #show_white '                                                 script version: v0.2'
    echo ""
 }
 
@@ -639,31 +639,21 @@ show_link() {
     LINE2_STRIPPED=$(echo -e "$LINE2" | sed 's/\x1b\[[0-9;]*m//g')
     echo "$LINE2_STRIPPED"
 
-    # Рассчитываем длину строк без ANSI-кодов
-    LINE1_LENGTH=${#LINE1_STRIPPED}
-    echo "$LINE1_LENGTH"
-    LINE2_LENGTH=${#LINE2_STRIPPED}
-    echo "$LINE2_LENGTH"
-
-    # Добавляем пробелы для выравнивания с учетом ANSI-кодов
+    # Добавляем пробелы для выравнивания
     LINE1_PADDING=$((MAX_WIDTH - 4 - LINE1_LENGTH))
     LINE2_PADDING=$((MAX_WIDTH - 4 - LINE2_LENGTH))
 
-    LINE1_PADDED=$(printf "║ %s%*s ║" "$(echo -e "$LINE1")" "$LINE1_PADDING" "")
-    LINE2_PADDED=$(printf "║ %s%*s ║" "$(echo -e "$LINE2")" "$LINE2_PADDING" "")
-
-   
-
+    LINE1_PADDED=$(printf "${TERRACOTTA}║ ${NC}%s%*s${TERRACOTTA} ║${NC}" "$(echo -e "$LINE1")" "$LINE1_PADDING" "")
+    LINE2_PADDED=$(printf "${TERRACOTTA}║ ${NC}%s%*s${TERRACOTTA} ║${NC}" "$(echo -e "$LINE2")" "$LINE2_PADDING" "")
 
     # Верхняя и нижняя границы
     BORDER_TOP="${TERRACOTTA}╔$(printf '═%.0s' $(seq 1 $((MAX_WIDTH - 2))))╗${NC}"
     BORDER_BOTTOM="${TERRACOTTA}╚$(printf '═%.0s' $(seq 1 $((MAX_WIDTH - 2))))╝${NC}"
 
-
     # Вывод рамки
     echo -e "$BORDER_TOP"
-    echo -e "${TERRACOTTA}$LINE1_PADDED${NC}"
-    echo -e "${TERRACOTTA}$LINE2_PADDED${NC}"
+    echo -e "$LINE1_PADDED"
+    echo -e "$LINE2_PADDED"
     echo -e "$BORDER_BOTTOM"
 
     
