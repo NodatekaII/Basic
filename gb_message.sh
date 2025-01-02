@@ -15,7 +15,7 @@ function show_bold() {
 echo ''
 show_bold "╔═══════════════════════════════════════════════════════════════════╗"
 echo ""
-show_bold "║ Спасибо что ты с нами! До новых нод и проектов, ваша Nodateka 💙   ║"
+show_bold "║ Спасибо что ты с нами! До новых нод и проектов, ваша Nodateka 💙  ║"
 echo ''
 echo -en "${TERRACOTTA}${BOLD}║ Telegram: ${NC}${LIGHT_BLUE}https://t.me/cryptotesemnikov/778${NC}${TERRACOTTA}${BOLD}                       ║${NC}\n"
 echo -en "${TERRACOTTA}${BOLD}║ Twitter: ${NC}${LIGHT_BLUE}https://x.com/nodateka${NC}${TERRACOTTA}${BOLD}                                   ║${NC}\n"
